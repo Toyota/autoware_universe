@@ -35,6 +35,44 @@
           "description": "threshold velocity to check if vehicle is stopped",
           "default": "0.01",
           "minimum": 0.0
+        },
+        "search_limit": {
+          "type": "number",
+          "description": "search limit for External Area in external safe mode",
+          "default": "30.0",
+          "minimum": 0.0
+        },
+        "area_margin_length": {
+          "type": "number",
+          "description": "margin length of stopping position, when LaneDriving comes into External Area",
+          "default": "0.5",
+          "minimum": 0.0
+        },
+        "th_old_trajectory_time_sec": {
+          "type": "number",
+          "description": "threshold time to joint old lane driving trajectory in use_external_extend",
+          "default": "30.0",
+          "minimum": 0.0
+        },
+        "use_safe_mode": {
+          "type": "boolean",
+          "description": "using safe mode (scenario change must be in stop)",
+          "default": "true"
+        },
+        "use_external": {
+          "type": "boolean",
+          "description": "using External Scenario",
+          "default": "true"
+        },
+        "use_external_extend": {
+          "type": "boolean",
+          "description": "using External trajectory extend to LaneDriving",
+          "default": "false"
+        },
+        "use_smooth_extend": {
+          "type": "boolean",
+          "description": "using External trajectory extend smoothly",
+          "default": "false"
         }
       },
       "required": [

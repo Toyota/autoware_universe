@@ -25,6 +25,10 @@
 #include <std_msgs/msg/bool.hpp>
 #include <tier4_planning_msgs/msg/scenario.hpp>
 
+#include <tier4_autoware_utils/math/constants.hpp>
+#include <motion_utils/trajectory/conversion.hpp>
+#include <motion_utils/trajectory/trajectory.hpp>
+
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>
 #include <lanelet2_traffic_rules/TrafficRules.h>
@@ -51,18 +55,24 @@ public:
   void onRoute(const autoware_planning_msgs::msg::LaneletRoute::ConstSharedPtr msg);
   void onOdom(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
   void onParkingState(const std_msgs::msg::Bool::ConstSharedPtr msg);
+  void onExternalState(const std_msgs::msg::Bool::ConstSharedPtr msg);
 
   bool isDataReady();
   void onTimer();
   void onLaneDrivingTrajectory(
     const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr msg);
   void onParkingTrajectory(const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr msg);
+  void onExternalTrajectory(const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr msg);
   void publishTrajectory(const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr msg);
 
   void updateCurrentScenario();
   std::string selectScenarioByPosition();
   autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr getScenarioTrajectory(
     const std::string & scenario);
+
+  size_t searchExternalIndex(const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr msg);
+  autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr cutTrajectoryByExternal(const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr msg);
+  autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr extendTrajectoryByLane(const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr msg);
 
 private:
   rclcpp::TimerBase::SharedPtr timer_;
@@ -74,12 +84,16 @@ private:
     sub_lane_driving_trajectory_;
   rclcpp::Subscription<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr
     sub_parking_trajectory_;
+  rclcpp::Subscription<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr
+    sub_external_trajectory_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr sub_parking_state_;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr sub_external_state_; 
   rclcpp::Publisher<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr pub_trajectory_;
   rclcpp::Publisher<tier4_planning_msgs::msg::Scenario>::SharedPtr pub_scenario_;
 
   autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr lane_driving_trajectory_;
   autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr parking_trajectory_;
+  autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr external_trajectory_;
   autoware_planning_msgs::msg::LaneletRoute::ConstSharedPtr route_;
   nav_msgs::msg::Odometry::ConstSharedPtr current_pose_;
   geometry_msgs::msg::TwistStamped::ConstSharedPtr twist_;
@@ -98,7 +112,15 @@ private:
   double th_arrived_distance_m_;
   double th_stopped_time_sec_;
   double th_stopped_velocity_mps_;
+  double search_limit_;
+  double area_margin_length_;
+  double th_old_trajectory_time_sec_;
+  bool use_safe_mode_;
+  bool use_external_;
+  bool use_external_extend_;
+  bool use_smooth_extend_;
   bool is_parking_completed_;
+  bool is_external_completed_;
 };
 
 #endif  // SCENARIO_SELECTOR__SCENARIO_SELECTOR_NODE_HPP_
