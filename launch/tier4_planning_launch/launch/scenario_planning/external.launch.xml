@@ -1,0 +1,20 @@
+<launch>
+  <arg name="vehicle_param_file"/>
+  <arg name="planner_name" default="external_planner"/>
+  <!-- external scenario -->
+  <group>
+    <push-ros-namespace namespace="external"/>
+    <!-- external module -->
+    <group>
+      <!-- Package name and launch file name must be same.-->
+      <include file="$(find-pkg-share $(var planner_name))/launch/$(var planner_name).launch.xml">
+        <arg name="input_route" value="/planning/mission_planning/route"/>
+        <arg name="input_scenario" value="/planning/scenario_planning/scenario"/>
+        <arg name="input_odometry" value="/localization/kinematic_state"/>
+        <arg name="output_trajectory" value="/planning/scenario_planning/external/trajectory"/>
+        <arg name="external_completed" value="/planning/scenario_planning/external/is_completed"/>
+        <arg name="vehicle_param_file" value="$(var vehicle_param_file)"/>
+      </include>
+    </group>
+  </group>
+</launch>

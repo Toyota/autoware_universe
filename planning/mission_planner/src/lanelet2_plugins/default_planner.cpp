@@ -83,12 +83,12 @@ bool is_in_parking_space(
   return false;
 }
 
-bool is_in_parking_lot(
-  const lanelet::ConstPolygons3d & parking_lots, const lanelet::ConstPoint3d & point)
+bool is_in_area(
+  const lanelet::ConstPolygons3d & areas, const lanelet::ConstPoint3d & point)
 {
-  for (const auto & parking_lot : parking_lots) {
+  for (const auto & area : areas) {
     const double distance = boost::geometry::distance(
-      lanelet::utils::to2D(parking_lot).basicPolygon(), lanelet::utils::to2D(point).basicPoint());
+      lanelet::utils::to2D(area).basicPolygon(), lanelet::utils::to2D(point).basicPoint());
     constexpr double th_distance = std::numeric_limits<double>::epsilon();
     if (distance < th_distance) {
       return true;
@@ -353,14 +353,18 @@ bool DefaultPlanner::is_goal_valid(
   // combine calculated route lanelets
   lanelet::ConstLanelet combined_prev_lanelet = combine_lanelets(path_lanelets);
 
-  // check if goal footprint exceeds lane when the goal isn't in parking_lot
+  // check if goal footprint exceeds lane when the goal isn't in parking_lot nor external area
   if (
     param_.check_footprint_inside_lanes &&
     !check_goal_footprint(
       closest_lanelet, combined_prev_lanelet, polygon_footprint, next_lane_length) &&
-    !is_in_parking_lot(
+    !is_in_area(
       lanelet::utils::query::getAllParkingLots(lanelet_map_ptr_),
-      lanelet::utils::conversion::toLaneletPoint(goal.position))) {
+      lanelet::utils::conversion::toLaneletPoint(goal.position)) &&
+    !is_in_area(
+      lanelet::utils::query::getAllPolygonsByType(lanelet_map_ptr_, "external_area"),
+      lanelet::utils::conversion::toLaneletPoint(goal.position))      
+      ) {
     RCLCPP_WARN(logger, "Goal's footprint exceeds lane!");
     return false;
   }
@@ -384,7 +388,13 @@ bool DefaultPlanner::is_goal_valid(
 
   // check if goal is in parking lot
   const auto parking_lots = lanelet::utils::query::getAllParkingLots(lanelet_map_ptr_);
-  if (is_in_parking_lot(parking_lots, goal_lanelet_pt)) {
+  if (is_in_area(parking_lots, goal_lanelet_pt)) {
+    return true;
+  }
+
+  // check if goal is in external area
+  const auto external_areas = lanelet::utils::query::getAllPolygonsByType(lanelet_map_ptr_, "external_area");
+  if (is_in_area(external_areas, goal_lanelet_pt)) {
     return true;
   }
 
