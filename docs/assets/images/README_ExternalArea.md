@@ -1,20 +1,16 @@
 # external_area
 
-## 要求の詳細
-外部のカスタムプランナー（`External Planner`）へ切り替えしたい区間において、
-Polygon(type:external_area)を配置すること。
+## Detailed Requirement
+Place a Polygon (type: external_area) in the section where you want to switch to an external custom planner (`External Planner`).
 
-## Autowareの振る舞い
-Autowareでは、External Plannerを有効にした際、
-自動運転車両のBaselink位置がexternal_area内に入った際、一時停止を行い、
- `LaneDriving` や `Parking`から`External Planner`へと切り替えを行う。<br>
-また、external_areaから出る際に、一時停止を行い、`LaneDriving` や `Parking`へプランニングを切り替える。
+## Behavior in Autoware
+When External Planner is enabled in Autoware, the autonomous vehicle will perform a temporary stop when the vehicle's baselink position enters the external_area, and the system will switch from `LaneDriving` or `Parking` to the `External Planner`.
 
+Similarly, when exiting the external_area, the vehicle will perform a temporary stop and planning will switch back to `LaneDriving` or `Parking`.
 
-## 補足
-- 外部Plannerで走行するルートはexternal_areaの外周ラインと重なねること
-- 地図製作者は、「どこでプランニングを切り替えるべきか」を依頼者と協議して決めること
+## Notes
+- The route driven by the external planner should overlap with the external_area’s outer boundary line.
+- The map author should discuss with the requester to decide where planning should be switched.
 
-
-## 望ましいVector Map
-![VectorMap作成](./external_area_img_ja.png)
+## Recommended Vector Map
+![Vector Map Example](./external_area_img.png)

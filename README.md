@@ -1,54 +1,54 @@
 # Autoware.universe with External Planner
+[日本語版READMEはこちら](README_ja.md)
 
-本リポジトリは、[Autoware.universe](https://github.com/autowarefoundation/autoware_universe) をベースに、外部のカスタムプランナー（`External Planner`）への切り替え機能を追加したリポジトリです。
+This repository is based on [Autoware.universe](https://github.com/autowarefoundation/autoware_universe) and adds the ability to switch to an external custom planner (`External Planner`).
 
-Autoware.universe に標準で提供されている `LaneDriving` や `Parking` では対応が難しい自律走行シナリオに対して、独自のプランニングアルゴリズムを組み込めるようにすることを目的としています。
+The goal is to enable incorporation of custom planning algorithms for autonomous driving scenarios that are difficult to handle with the standard Autoware.universe planners such as `LaneDriving` or `Parking`.
 
-> [!CAUTION]
-> なお、`External Planner`本体は本リポジトリには含まれておらず、別途実装する必要があります。
+> CAUTION
+> The `External Planner` implementation itself is not included in this repository and must be implemented separately.
 
-## 概要
+## Overview
 
-これまでのAutoware.universe では、自動運転のための様々なPlanning機能が提供されており、レーン走行や駐車などのシナリオに対応しています。
+Autoware.universe provides various planning capabilities for autonomous driving, supporting scenarios such as lane driving and parking.
 
-一方で、標準で提供されているPlannerでは対応が難しく、用途に応じた独自のプランニングアルゴリズムが必要となるケースがあります。
+However, there are cases where the standard planners cannot handle the required behavior, and a custom planning algorithm tailored to the use case is needed.
 
-本リポジトリでは、AutowareのPlanningシステムに `ExternalPlanner` Scenarioを追加し、外部で実装したカスタムPlannerを利用できるようにしています。
+This repository adds an `External Planner` scenario to Autoware's planning system so that a custom planner implemented externally can be used.
 
-External Plannerへの切り替えは、車両位置とVectorMap上に定義された `external_area` を利用して自動的に行われます。
+Switching to the External Planner is done automatically based on the vehicle position and the `external_area` defined on the VectorMap.
 
-### 想定ユースケース
+### Intended Use Cases
+The External Planner mechanism is intended for use in scenarios such as:
 
-External Plannerの仕組みは、例えば以下のような用途を想定しています。
+- Special autonomous driving maneuvers
+- Research and development of new planning algorithms
+- Integration of a proprietary planner into Autoware
+- Driving scenarios difficult to achieve using Autoware's standard planners
 
-* 特殊な自動運転走行動作
-* 新しいPlanningアルゴリズムの研究・開発
-* 独自開発したPlannerのAutowareへの統合
-* Autoware標準Plannerでは実現が難しい走行シナリオ
+### Node Architecture
+![Node Flow](./docs/assets/images/node_flow.png)
 
-### ノード構成
-![ノード構成](./docs/assets/images/node_flow.png)
+## Major Added Features
 
-## 追加した主な機能
+This repository adds the following features:
 
-本リポジトリでは、以下の機能を追加しています。
+- Support for custom planners other than `LaneDriving` and `Parking`
+- Automatic switch to an External Scenario based on `external_area`
+- Specify the custom planner package to use via ROS parameters
+- Safe mode that switches to the External Planner after the vehicle stops
+- Functionality to connect the External Planner's trajectory with the `LaneDriving` trajectory
+- Smoothing of velocity commands when connecting trajectories
+- Completion notification from the External Planner
 
-* `LaneDriving` および `Parking` 以外のカスタムPlannerへの対応
-* `external_area` に基づいたExternal Scenarioへの自動切り替え
-* ROSパラメータによる使用するカスタムPlannerパッケージの指定
-* 車両停止後にExternal Plannerへ切り替えるSafe Mode
-* External PlannerのTrajectoryと `LaneDriving` のTrajectoryを接続する機能
-* Trajectory接続時の速度指令の平滑化機能
-* External Plannerからの完了通知
+## Switching to the External Planner
 
-## External Plannerへの切り替え
-
-External Plannerは、VectorMapに定義された `external_area` を基準として選択されます。
+The External Planner is selected based on the `external_area` defined in the VectorMap.
 
 ```text
 Vehicle
    |
-   | external_areaへ接近
+   | approach external_area
    v
 +------------------+
 | Scenario Selector|
@@ -66,108 +66,103 @@ Vehicle
 +------------------+
 ```
 
-`scenario_selector` は、車両の進行方向に対して `external_area` を検索します。
+The `scenario_selector` searches for `external_area` in the vehicle’s driving direction.
 
-車両が切り替え条件を満たすと、標準のPlanning ScenarioからExternal Scenarioへ切り替わります。
+When the vehicle meets the switching conditions, the system switches from the standard planning scenario to the External Scenario.
 
-## 設定
+## Configuration
 
-### External Plannerを有効にする
+### Enabling the External Planner
 
-External Plannerの機能は、以下のLaunchファイルから有効化できます。
+You can enable the External Planner feature from the following launch file:
 
 ```text
 launch/tier4_planning_launch/launch/scenario_planning/scenario_planning.launch.xml
 ```
 
-以下のパラメータを設定します。
+Set the following parameter:
 
 ```yaml
 use_external: true
 ```
 
-External Plannerを使用する場合は、使用するPlannerパッケージを以下のパラメータで指定します。
+When using an External Planner, specify the planner package to use with this parameter:
 
 ```yaml
 external_planner_name: <your_external_planner_package>
 ```
 
-例えば、
+For example:
 
 ```yaml
 use_external: true
 external_planner_name: my_external_planner
 ```
 
-と設定します。
+If `use_external` is `false`, the External Planner package will not be launched.
 
-`use_external` が `false` の場合、External PlannerパッケージはLaunchされません。
+### How to configure external_area in the Vector Map
 
-### Vector Mapへのexternal_areaの設定仕方
-以下の手順に従って、設定してください。📖[設定手順はこちら](./docs/assets/images/README_ExternalArea.md)
+Follow the steps in the link below. 📖[Configuration steps here](./docs/assets/images/README_ExternalArea.md)
 
-
-### 追加したパラメータ
+### Added Parameters
 
 #### `scenario_selector`
 
-| Parameter                    | Type     | Default | Description                                                                |
-| ---------------------------- | -------- | ------- | -------------------------------------------------------------------------- |
-| `search_limit`               | `double` | `30.0`  | 進行方向に対して `external_area` を検索する距離 [m] |
-| `area_margin_length`         | `double` | `0.5`   | 車両が `external_area` に確実に進入するためにLaneDriving Trajectoryへ付加する距離 [m] |
-| `th_old_trajectory_time_sec` | `double` | `30.0`  | External TrajectoryへLaneDriving Trajectoryを接続する際に使用する既存Trajectoryの有効時間 [s] |
-| `use_safe_mode`              | `bool`   | `true`  | `true`の場合、車両停止後にExternal Plannerへ切り替える |
-| `use_external`               | `bool`   | `true`  | External Planner機能の有効／無効 |
-| `use_external_extend`        | `bool`   | `false` | External PlannerのTrajectoryにLaneDriving Trajectoryを接続する |
-| `use_smooth_extend`          | `bool`   | `false` | Trajectory接続時の速度指令を平滑化する |
+| Parameter                    | Type     | Default | Description                                                                 |
+| ---------------------------- | -------- | ------- | --------------------------------------------------------------------------- |
+| `search_limit`                 | `double`   | `30.0`    | Search distance [m] for external_area in the driving direction             |
+| `area_margin_length`           | `double`   | `0.5`     | Distance [m] added to the LaneDriving trajectory to ensure the vehicle enters external_area |
+| `th_old_trajectory_time_sec`   | `double`   | `30.0`    | Valid time [s] of the existing trajectory used when connecting LaneDriving trajectory to External trajectory |
+| `use_safe_mode`                | `bool`     | `true`    | If `true`, switch to External Planner after vehicle stops                    |
+| `use_external`                 | `bool`     | `true`    | Enable/disable External Planner functionality                               |
+| `use_external_extend`          | `bool`     | `false`   | Connect LaneDriving trajectory to the External Planner's trajectory        |
+| `use_smooth_extend`            | `bool`     | `false`   | Smooth velocity commands when connecting trajectories                      |
 
-#### `scenario_planning.launch.xml`
+#### scenario_planning.launch.xml
 
-| Parameter               | Type     | Default            | Description                              |
-| ----------------------- | -------- | ------------------ | ---------------------------------------- |
-| `use_external`          | `bool`   | `false`            | `true`の場合、External PlannerパッケージをLaunchする |
-| `external_planner_name` | `string` | `external_planner` | External Plannerのパッケージ名 |
+| Parameter               | Type     | Default            | Description                                |
+| ----------------------- | -------- | ------------------ | ------------------------------------------ |
+| `use_external`            | `bool`     | `false`              | If `true`, launch the External Planner package |
+| `external_planner_name`   | `string`   | `external_planner`   | The package name of the External Planner    |
 
-## 依存関係
+## Dependencies
+Message definitions required for integration with the External Planner are needed separately.
 
-External Plannerとの連携に必要なMessage定義が別途必要です。
+Please refer to the following pull request:
 
-以下のPull Requestを参照してください。
+- [Toyota/tier4_autoware_msgs#1](https://github.com/Toyota/tier4_autoware_msgs/pull/1)
 
-* [Toyota/tier4_autoware_msgs#1](https://github.com/Toyota/tier4_autoware_msgs/pull/1)
+## Installation
 
-## インストール
+For basic environment setup, follow the standard Autoware.universe installation instructions.
 
-基本的な環境構築については、Autoware.universeの標準的なインストール手順に従ってください。
+After setting up the Autoware.universe environment, build this repository and any necessary dependency repositories.
 
-Autoware.universeの環境構築後、本リポジトリおよび必要な依存リポジトリをBuildしてください。
+For building and installing Autoware.universe, see:
 
-Autoware.universeの環境構築・インストールについては、以下を参照してください。
+- Autoware Documentation: https://autowarefoundation.github.io/autoware-documentation/
+- Autoware Universe Documentation: https://autowarefoundation.github.io/autoware_universe/
 
-* [Autoware Documentation](https://autowarefoundation.github.io/autoware-documentation/)
-* [Autoware Universe Documentation](https://autowarefoundation.github.io/autoware_universe/)
+## License
 
-## ライセンス
+This project follows the original Autoware.universe project license. See LICENSE for details.
 
-本プロジェクトは、元のAutoware.universeプロジェクトのライセンスに従います。
-詳細については [LICENSE](LICENSE) を参照してください。
+## Contribution
 
-## コントリビューション
+Thank you for your interest in this project.
+We are currently preparing the structure and guidelines to accept external pull requests (planned to start within 2026).
+In the meantime, please report bugs or request features via Issues.
 
-本プロジェクトに関心をお持ちいただきありがとうございます。
-現在、外部からのPull Requestを受け付けるための体制・ガイドラインを整備中です（2026年内に開始予定）。
-それまでの間は、バグ報告や機能要望についてはIssueでお知らせいただけると助かります。
+## Development & Maintenance Members
 
-## 開発・保守メンバー
+This project is currently developed and maintained by:
+- Yasuaki Miyahara (Toyota Motor Corporation)
+- Naoya Hashimoto (Toyota Motor Corporation)
+- Shun Takahashi (Toyota Motor Corporation)
+- Daichi Tanizaki (Toyota Motor Corporation)
 
-本プロジェクト は現在、以下のメンバーによって開発・保守されています。
+## Contact
 
-* 宮原 康晃（トヨタ自動車㈱）
-* 橋本 直也（トヨタ自動車㈱）
-* 高橋 俊（トヨタ自動車㈱）
-* 谷崎 大地（トヨタ自動車㈱）
-
-## お問い合わせ
-
-バグ報告や機能要望については、Issue を作成してください。
-内容を確認のうえ、可能な範囲で対応いたします。
+Please open an Issue for bug reports or feature requests.
+We will review and address them as much as possible.
