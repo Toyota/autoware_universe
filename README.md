@@ -5,7 +5,7 @@ This repository is based on [Autoware.universe](https://github.com/autowarefound
 
 The goal is to enable incorporation of custom planning algorithms for autonomous driving scenarios that are difficult to handle with the standard Autoware.universe planners such as `LaneDriving` or `Parking`.
 
-> CAUTION
+> [!CAUTION]
 > The `External Planner` implementation itself is not included in this repository and must be implemented separately.
 
 ## Overview
